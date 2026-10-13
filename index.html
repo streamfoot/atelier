@@ -1,0 +1,119 @@
+!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Gestion Atelier</title>
+<style>
+:root{--bg:#f4f1ea;--card:#fff;--ink:#16213e;--mut:#6b7280;--acc:#f2b705;--ok:#1f7a4d;--bad:#c0392b;--line:#e6e1d6;--okbg:#e0f3e8;--warn:#fff1c2;--badbg:#fde4e1;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1630;--card:#18244a;--ink:#f1f3fa;--mut:#9aa6c7;--line:#2a3763;--okbg:#17432f;--warn:#4a3d0c;--badbg:#4d2320}}
+:root[data-theme="dark"]{--bg:#0e1630;--card:#18244a;--ink:#f1f3fa;--mut:#9aa6c7;--line:#2a3763;--okbg:#17432f;--warn:#4a3d0c;--badbg:#4d2320}
+html,body{height:100%}*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding-bottom:84px}
+header{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:#16213e;color:#fff;position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+header b{font-size:17px}header b i{color:var(--acc);font-style:normal}
+#net{font-size:12px;padding:3px 9px;border-radius:99px;background:#1f7a4d}#net.off{background:#c0392b}
+main{padding:14px;max-width:640px;margin:auto}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:10px}
+.tap{cursor:pointer}.row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.st{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px}.st small{color:var(--mut);display:block;font-size:12px}.st b{font-size:18px}
+h2{font-size:16px;margin:16px 0 8px}small,.mut{color:var(--mut)}
+.tag{font-size:12px;padding:2px 9px;border-radius:99px;background:var(--warn);white-space:nowrap}.tag.ok{background:var(--okbg);color:var(--ok)}.tag.bad{background:var(--badbg);color:var(--bad)}
+.bar{height:6px;background:var(--line);border-radius:9px;margin-top:8px;overflow:hidden}.bar i{display:block;height:100%;background:var(--ok)}
+button,.btn{font:inherit;border:0;border-radius:11px;padding:10px 14px;background:var(--acc);color:#16213e;font-weight:600;cursor:pointer;text-decoration:none;display:inline-block;text-align:center}
+button.g,.btn.g{background:transparent;border:1px solid var(--line);color:var(--ink)}.btn.wa{background:#1f9d55;color:#fff}.btn.d{background:var(--badbg);color:var(--bad)}
+.chips{display:flex;gap:6px;overflow-x:auto;margin-bottom:10px;padding-bottom:2px}.chips button{padding:7px 12px;white-space:nowrap;background:var(--card);border:1px solid var(--line);color:var(--ink);font-weight:500}.chips button.on{background:var(--acc);color:#16213e;border-color:var(--acc)}
+input,select,textarea{width:100%;font:inherit;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink)}
+label{display:block;font-size:13px;color:var(--mut);margin:10px 0 3px}
+nav{position:fixed;left:0;right:0;bottom:0;display:flex;background:#16213e;padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px));z-index:6}
+nav button{flex:1;background:none;color:#aeb8d8;font-size:12px;padding:8px 2px}nav button.on{color:var(--acc)}
+#m{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;z-index:9;align-items:flex-end;justify-content:center}
+#m.show{display:flex}#mb{background:var(--bg);width:100%;max-width:640px;max-height:92%;overflow:auto;border-radius:18px 18px 0 0;padding:16px 16px calc(20px + env(safe-area-inset-bottom,0px))}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}.acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.step{display:flex;gap:5px;flex-wrap:wrap}.step button{padding:6px 10px;font-size:13px;background:var(--card);border:1px solid var(--line);color:var(--ink);font-weight:500}.step button.on{background:var(--acc);border-color:var(--acc);color:#16213e}.step button.done{background:var(--okbg);color:var(--ok)}
+.ms{display:grid;grid-template-columns:1fr 90px;gap:6px;align-items:center;margin-top:4px}.ms span{font-size:14px}
+</style></head><body>
+<header><b>Gestion <i>Atelier</i></b><span id="net">En ligne</span></header>
+<main id="v"></main>
+<nav><button data-a="tab" data-i="home">Accueil</button><button data-a="tab" data-i="orders">Commandes</button><button data-a="tab" data-i="clients">Clients</button><button data-a="tab" data-i="more">Sauvegarde</button></nav>
+<div id="m" data-a="close"><div id="mb"></div></div>
+<script>
+const ST=["Mesures","Coupe","Couture","Essayage","Prêt","Livré"];
+const MS=["Tour de cou","Épaules","Poitrine","Taille","Hanches","Longueur manche","Longueur robe / jupe","Longueur pantalon","Entrejambe"];
+let S={clients:[],orders:[]},view='home',filt='cours',q='';
+try{const r=localStorage.getItem('atelier_v2');if(r)S=JSON.parse(r)}catch(x){}
+const save=()=>{try{localStorage.setItem('atelier_v2',JSON.stringify(S))}catch(x){}};
+const $=s=>document.querySelector(s);
+const e=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+const F=n=>Math.round(n).toLocaleString('fr-FR').replace(/[\u202f\u00a0]/g,' ')+' F';
+const today=()=>new Date().toISOString().slice(0,10);
+const add=n=>{const d=new Date();d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)};
+const dd=d=>Math.round((new Date(d)-new Date(today()))/864e5);
+const fd=d=>d?new Date(d).toLocaleDateString('fr-FR',{day:'numeric',month:'short'}):'—';
+const paid=o=>o.pays.reduce((a,p)=>a+p.a,0),bal=o=>o.price-paid(o);
+const cl=id=>S.clients.find(c=>c.id===id)||{name:'(client supprimé)',phone:'',m:{}};
+const late=o=>o.stage!=='Livré'&&o.due&&dd(o.due)<0;
+const val=id=>{const x=document.getElementById(id);return x?x.value.trim():''};
+function waUrl(p,t){let n=String(p).replace(/\D/g,'');if(n.startsWith('00'))n=n.slice(2);if(n.length&&n.length<=10)n='229'+n;return 'https://wa.me/'+n+'?text='+encodeURIComponent(t)}
+function msgs(o){const c=cl(o.cid),n=c.name.split(' ')[0],b=bal(o);return[
+['Commande reçue',`Bonjour ${n}, votre commande (${o.item}) est bien enregistrée. Prix : ${F(o.price)}, déjà versé : ${F(paid(o))}. Livraison prévue le ${fd(o.due)}. Merci de votre confiance !`],
+['Essayage',`Bonjour ${n}, votre ${o.item} est prêt pour l'essayage. Quand pouvez-vous passer à l'atelier ?`],
+['Commande prête',`Bonjour ${n}, votre commande (${o.item}) est prête.${b>0?' Reste à payer : '+F(b)+'.':' Elle est entièrement payée.'} Vous pouvez venir la récupérer.`],
+['Rappel solde',`Bonjour ${n}, petit rappel : il reste ${F(b)} à régler pour votre ${o.item}. Merci !`],
+['Retard',`Bonjour ${n}, désolé, votre ${o.item} aura un peu de retard. Nous vous prévenons dès qu'il est prêt.`]]}
+function suggest(o){if(late(o))return 'Retard';if(o.stage==='Essayage')return 'Essayage';if(o.stage==='Prêt')return 'Commande prête';if(bal(o)>0)return 'Rappel solde';return 'Commande reçue'}
+function tag(o){if(o.stage==='Livré')return bal(o)>0?'<span class="tag bad">Livré · reste '+F(bal(o))+'</span>':'<span class="tag ok">Livré</span>';if(late(o))return '<span class="tag bad">'+(-dd(o.due))+' j de retard</span>';if(o.stage==='Prêt')return '<span class="tag ok">Prêt</span>';return '<span class="tag">'+o.stage+'</span>'}
+function oCard(o){const c=cl(o.cid),p=paid(o),pc=o.price?Math.min(100,p/o.price*100):100;return `<div class="card tap" data-a="openO" data-i="${o.id}"><div class="row"><b>${e(o.item)} · ${e(c.name)}</b>${tag(o)}</div><small>Prix ${F(o.price)} · ${bal(o)>0?'Reste '+F(bal(o)):'Soldé'} · Livraison ${fd(o.due)}</small><div class="bar"><i style="width:${pc}%"></i></div></div>`}
+function render(){document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.i===view));const v=$('#v');
+const act=S.orders.filter(o=>o.stage!=='Livré');
+if(view==='home'){const due=act.reduce((a,o)=>a+Math.max(0,bal(o)),0)+S.orders.filter(o=>o.stage==='Livré').reduce((a,o)=>a+Math.max(0,bal(o)),0);
+const todo=act.filter(o=>late(o)||o.stage==='Prêt'||(o.due&&dd(o.due)<=3)).sort((a,b)=>(a.due||'').localeCompare(b.due||''));
+v.innerHTML=exp()+`<div class="grid"><div class="st"><small>En cours</small><b>${act.length}</b></div><div class="st"><small>À encaisser</small><b>${F(due)}</b></div><div class="st"><small>En retard</small><b style="color:var(--bad)">${act.filter(late).length}</b></div></div>
+<div class="acts" style="margin:0 0 6px"><button data-a="newO">+ Nouvelle commande</button><button class="g" data-a="newC">+ Nouveau client</button></div>
+<h2>À traiter en priorité</h2>${todo.length?todo.map(oCard).join(''):'<p class="mut">Rien d\'urgent. Les commandes en retard, prêtes ou à livrer sous 3 jours apparaîtront ici.</p>'}`}
+if(view==='orders'){const L={cours:act,pret:S.orders.filter(o=>o.stage==='Prêt'),liv:S.orders.filter(o=>o.stage==='Livré'),all:S.orders}[filt];
+v.innerHTML=`<div class="chips">${[['cours','En cours'],['pret','Prêtes'],['liv','Livrées'],['all','Toutes']].map(x=>`<button class="${filt===x[0]?'on':''}" data-a="filt" data-i="${x[0]}">${x[1]}</button>`).join('')}</div><button data-a="newO" style="width:100%;margin-bottom:10px">+ Nouvelle commande</button>${L.length?L.slice().sort((a,b)=>(a.due||'').localeCompare(b.due||'')).map(oCard).join(''):'<p class="mut">Aucune commande ici.</p>'}`}
+if(view==='clients'){const L=S.clients.filter(c=>(c.name+c.phone).toLowerCase().includes(q.toLowerCase())).sort((a,b)=>a.name.localeCompare(b.name));
+v.innerHTML=`<input id="q" placeholder="Rechercher un client…" value="${e(q)}" data-a="noop"><div class="acts" style="margin:10px 0"><button data-a="newC">+ Nouveau client</button></div>${L.map(c=>{const n=S.orders.filter(o=>o.cid===c.id&&o.stage!=='Livré').length;return `<div class="card tap" data-a="openC" data-i="${c.id}"><div class="row"><b>${e(c.name)}</b>${n?'<span class="tag">'+n+' en cours</span>':''}</div><small>${e(c.phone)||'Pas de numéro'} · ${Object.keys(c.m||{}).length} mesures</small></div>`}).join('')||'<p class="mut">Aucun client. Ajoutez le premier.</p>'}`;
+const qi=$('#q');qi.oninput=()=>{q=qi.value;const p=qi.selectionStart;render();const n=$('#q');n.focus();n.setSelectionRange(p,p)}}
+if(view==='more'){const j=JSON.stringify(S);v.innerHTML=exp(1)+`<div class="card"><b>Vos données restent sur ce téléphone</b><p class="mut">Tout fonctionne sans internet (sauf l'envoi WhatsApp). Faites une sauvegarde de temps en temps : copiez le texte ci-dessous et collez-le dans une note ou un message à vous-même.</p><textarea id="ex" rows="5" readonly>${e(j)}</textarea><div class="acts"><button data-a="copy">Copier la sauvegarde</button></div></div>
+<div class="card"><b>Restaurer une sauvegarde</b><textarea id="im" rows="4" placeholder="Collez ici le texte sauvegardé"></textarea><div class="acts"><button class="g" data-a="restore">Restaurer</button></div><p id="rs" class="mut"></p></div>`}}
+function modal(h){$('#mb').innerHTML=h;$('#m').classList.add('show')}
+function close(){$('#m').classList.remove('show');render()}
+function cForm(c){c=c||{id:'',name:'',phone:'',notes:'',m:{}};const keys=MS.concat(Object.keys(c.m||{}).filter(k=>!MS.includes(k)));
+modal(`<h2 style="margin-top:0">${c.id?e(c.name):'Nouveau client'}</h2><label>Nom</label><input id="cn" value="${e(c.name)}"><label>Téléphone (WhatsApp)</label><input id="cp" type="tel" value="${e(c.phone)}" placeholder="ex : 01 97 00 00 00"><label>Mesures (cm)${c.mdate?' · prises le '+fd(c.mdate):''}</label>${keys.map(k=>`<div class="ms"><span>${e(k)}</span><input type="number" step="0.5" inputmode="decimal" data-m="${e(k)}" value="${e((c.m||{})[k])}"></div>`).join('')}<div class="ms"><input id="xn" placeholder="Autre mesure…"><input id="xv" type="number" step="0.5" inputmode="decimal" placeholder="cm"></div><label>Notes (morphologie, goûts…)</label><textarea id="cno" rows="2">${e(c.notes)}</textarea><div class="acts"><button data-a="saveC" data-i="${c.id}">Enregistrer</button><button class="g" data-a="close">Annuler</button></div>`)}
+function oForm(cid){if(!S.clients.length){modal('<p>Ajoutez d\'abord un client pour lui créer une commande.</p><div class="acts"><button data-a="newC">+ Nouveau client</button></div>');return}
+modal(`<h2 style="margin-top:0">Nouvelle commande</h2><label>Client</label><select id="oc">${S.clients.map(c=>`<option value="${c.id}" ${c.id===cid?'selected':''}>${e(c.name)}</option>`).join('')}</select><label>Modèle / vêtement</label><input id="oi" list="its" placeholder="ex : Robe en pagne"><datalist id="its"><option>Robe en pagne</option><option>Boubou</option><option>Costume</option><option>Chemise</option><option>Jupe</option><option>Pantalon</option><option>Ensemble</option></datalist><div class="two"><div><label>Prix total (F)</label><input id="op" type="number" inputmode="numeric"></div><div><label>Acompte reçu (F)</label><input id="oa" type="number" inputmode="numeric" value="0"></div></div><label>Date de livraison promise</label><input id="od" type="date" value="${add(14)}"><label>Détails (tissu, modèle, remarques)</label><textarea id="on" rows="2"></textarea><div class="acts"><button data-a="saveO">Créer la commande</button><button class="g" data-a="close">Annuler</button></div>`)}
+function oView(id){const o=S.orders.find(x=>x.id===id);if(!o)return close();const c=cl(o.cid),i=ST.indexOf(o.stage),sg=suggest(o),M=msgs(o).sort((a,b)=>(b[0]===sg)-(a[0]===sg));
+modal(`<div class="row"><h2 style="margin:0">${e(o.item)}</h2>${tag(o)}</div><p class="mut" style="margin:2px 0 10px">${e(c.name)} · ${e(c.phone)||'pas de numéro'}${o.notes?'<br>'+e(o.notes):''}</p>
+<label>Étape de fabrication</label><div class="step">${ST.map((s,k)=>`<button class="${k===i?'on':k<i?'done':''}" data-a="stage" data-i="${o.id}" data-s="${s}">${s}</button>`).join('')}</div>
+<div class="row" style="margin-top:12px"><div><small>Prix</small><br><b>${F(o.price)}</b></div><div><small>Payé</small><br><b>${F(paid(o))}</b></div><div><small>Reste</small><br><b style="color:${bal(o)>0?'var(--bad)':'var(--ok)'}">${F(bal(o))}</b></div><div><small>Livraison</small><br><b>${fd(o.due)}</b></div></div>
+${bal(o)>0?`<div class="two" style="margin-top:10px"><input id="pa" type="number" inputmode="numeric" placeholder="Montant reçu (F)"><button data-a="pay" data-i="${o.id}">+ Encaisser</button></div>`:''}
+${o.pays.length?'<label>Versements</label>'+o.pays.map(p=>`<div class="row"><small>${fd(p.d)}</small><span>${F(p.a)}</span></div>`).join(''):''}
+<label>Envoyer un message WhatsApp</label>${M.map(m=>`<a class="btn ${m[0]===sg?'wa':'g'}" style="margin:0 6px 6px 0" target="_blank" rel="noopener" href="${waUrl(c.phone,m[1])}">${m[0]===sg?'★ ':''}${m[0]}</a>`).join('')}
+${Object.keys(c.m||{}).length?'<label>Mesures de la cliente</label><div class="card" style="margin:0">'+Object.entries(c.m).map(([k,v])=>`<div class="row"><small>${e(k)}</small><b>${e(v)} cm</b></div>`).join('')+'</div>':'<p class="mut">Aucune mesure enregistrée pour ce client.</p>'}
+<div class="acts"><button class="g" data-a="openC" data-i="${c.id}">Fiche client</button><button class="d btn" data-a="delO" data-i="${o.id}">Supprimer</button><button class="g" data-a="close">Fermer</button></div>`)}
+function cView(id){const c=S.clients.find(x=>x.id===id);if(!c)return close();const os=S.orders.filter(o=>o.cid===id);
+modal(`<h2 style="margin-top:0">${e(c.name)}</h2><p class="mut">${e(c.phone)||'Pas de numéro'}${c.notes?'<br>'+e(c.notes):''}</p><div class="card">${Object.keys(c.m||{}).length?Object.entries(c.m).map(([k,v])=>`<div class="row"><small>${e(k)}</small><b>${e(v)} cm</b></div>`).join(''):'<span class="mut">Aucune mesure</span>'}</div>${os.length?'<label>Commandes</label>'+os.map(oCard).join(''):''}<div class="acts"><button data-a="newO" data-i="${c.id}">+ Commande</button><button class="g" data-a="editC" data-i="${c.id}">Modifier / mesures</button>${c.phone?`<a class="btn wa" target="_blank" rel="noopener" href="${waUrl(c.phone,'Bonjour '+c.name.split(' ')[0]+', ')}">WhatsApp</a>`:''}<button class="d btn" data-a="delC" data-i="${c.id}">Supprimer</button><button class="g" data-a="close">Fermer</button></div>`)}
+const A={noop(){},tab(i){view=i;render()},filt(i){filt=i;render()},close(i,t){if(t.id==='m'&&event.target!==t)return;close()},
+newC(){cForm()},editC(i){cForm(S.clients.find(c=>c.id===i))},openC(i){cView(i)},newO(i){oForm(i)},openO(i){oView(i)},
+saveC(i){const n=val('cn');if(!n){$('#cn').focus();return}let c=S.clients.find(x=>x.id===i);if(!c){c={id:uid(),m:{}};S.clients.push(c)}
+const old=JSON.stringify(c.m||{});c.name=n;c.phone=val('cp');c.notes=val('cno');const m={};document.querySelectorAll('[data-m]').forEach(x=>{if(x.value!=='')m[x.dataset.m]=x.value});if(val('xn')&&val('xv'))m[val('xn')]=val('xv');c.m=m;if(JSON.stringify(m)!==old)c.mdate=today();save();cView(c.id);render()},
+saveO(){const it=val('oi'),p=+val('op');if(!it||!p){(!it?$('#oi'):$('#op')).focus();return}const a=+val('oa')||0;const o={id:uid(),cid:val('oc'),item:it,price:p,due:val('od'),notes:val('on'),stage:'Mesures',pays:a?[{d:today(),a}]:[],created:today()};S.orders.push(o);save();oView(o.id);render()},
+stage(i,t){const o=S.orders.find(x=>x.id===i);o.stage=t.dataset.s;save();oView(i);render()},
+pay(i){const a=+val('pa');if(!a)return;const o=S.orders.find(x=>x.id===i);o.pays.push({d:today(),a:Math.min(a,Math.max(a,0))});save();oView(i);render()},
+delO(i,t){if(!t.dataset.ok){t.dataset.ok=1;t.textContent='Confirmer ?';return}S.orders=S.orders.filter(o=>o.id!==i);save();close()},
+delC(i,t){if(!t.dataset.ok){t.dataset.ok=1;t.textContent='Confirmer ? (supprime ses commandes)';return}S.clients=S.clients.filter(c=>c.id!==i);S.orders=S.orders.filter(o=>o.cid!==i);save();close()},
+copy(){const x=$('#ex');x.select();try{navigator.clipboard.writeText(x.value)}catch(z){try{document.execCommand('copy')}catch(y){}}},
+restore(){try{const d=JSON.parse(val('im'));if(!d.clients||!d.orders)throw 0;S=d;save();$('#rs').textContent='Données restaurées.';}catch(x){$('#rs').textContent='Texte invalide : collez la sauvegarde complète.'}}};
+document.addEventListener('click',ev=>{const t=ev.target.closest('[data-a]');if(!t||t.tagName==='INPUT'||t.tagName==='A')return;if(t.id==='m'&&ev.target!==t)return;ev.preventDefault();window.event=ev;A[t.dataset.a](t.dataset.i,t)});
+const net=()=>{const n=$('#net');n.textContent=navigator.onLine?'En ligne':'Hors connexion';n.className=navigator.onLine?'':'off'};
+
+const PUB={"kty": "EC", "crv": "P-256", "x": "OwugiQ-fkBBGPuCgpt0KVo_6RJR9_Z3mdAo5I0YrLpw", "y": "lm7Ny_jw_lvI8hg-ocFfT2yWoJ-wz8bVxttCrfKDUw8"};
+const b64=s=>Uint8Array.from(atob(s.replace(/-/g,'+').replace(/_/g,'/')),c=>c.charCodeAt(0));
+let DEV='',LIC=null;
+try{DEV=localStorage.getItem('atelier_dev')||'';if(!DEV){DEV=Array.from(crypto.getRandomValues(new Uint8Array(8)),x=>'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[x%32]).join('');localStorage.setItem('atelier_dev',DEV)}}catch(x){DEV=''}
+async function check(code){try{const[p,s]=code.trim().split('.');const j=JSON.parse(new TextDecoder().decode(b64(p)));const k=await crypto.subtle.importKey('jwk',PUB,{name:'ECDSA',namedCurve:'P-256'},false,['verify']);if(!await crypto.subtle.verify({name:'ECDSA',hash:'SHA-256'},k,b64(s),new TextEncoder().encode(p)))return null;if(!DEV||j.d!==DEV)return{err:'Ce code a été créé pour un autre appareil.'};if(j.e<today())return{err:'Licence expirée le '+j.e+'. Demandez un nouveau code.'};return j}catch(x){return null}}
+function exp(full){if(!LIC)return'';const n=dd(LIC.e),inf=LIC.e>='2099';if(full)return `<div class="card"><b>Licence</b><p class="mut" style="margin:4px 0 0">${e(LIC.n)} · ${inf?'sans limite de durée':'valable jusqu\'au '+fd(LIC.e)}</p></div>`;return !inf&&n<=14?`<div class="card" style="background:var(--warn)">Votre licence expire dans ${n} jour(s). Contactez votre fournisseur pour la renouveler.</div>`:''}
+function lockScreen(msg){document.querySelector('nav').style.display='none';$('#v').innerHTML=`<div class="card"><h2 style="margin-top:0">🔒 Activation requise</h2><p>Cette application est réservée à son titulaire. Envoyez l'identifiant ci-dessous à votre fournisseur pour recevoir votre code d'activation.</p><div class="card" style="text-align:center"><small>Identifiant de cet appareil</small><br><b style="font-size:24px;letter-spacing:2px">${DEV?DEV.slice(0,4)+'-'+DEV.slice(4):'indisponible'}</b></div>${DEV?'':'<p style="color:var(--bad)">Le stockage du navigateur est bloqué : ouvrez l\'application dans un navigateur normal, hors navigation privée.</p>'}<label>Code d'activation</label><textarea id="lc" rows="4" placeholder="Collez le code reçu"></textarea>${msg?`<p style="color:var(--bad)">${e(msg)}</p>`:''}<div class="acts"><button data-a="act">Activer</button></div></div>`}
+async function boot(){let c='';try{c=localStorage.getItem('atelier_lic')||''}catch(x){}const r=c?await check(c):null;if(r&&!r.err){LIC=r;document.querySelector('nav').style.display='';render();return}lockScreen(r&&r.err?r.err:'')}
+A.act=async()=>{const c=val('lc'),r=await check(c);if(r&&!r.err){try{localStorage.setItem('atelier_lic',c)}catch(x){}boot()}else lockScreen(r&&r.err?r.err:'Code invalide.')};
+addEventListener('online',net);addEventListener('offline',net);net();boot();
+</script></body></html>
